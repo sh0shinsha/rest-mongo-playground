@@ -1,6 +1,8 @@
 import mongodb from 'mongodb'
 const { ObjectId } = mongodb;
 
+import parseNestedJsonFromQueryParam from './_utils/parseNestedJsonFromQueryParam.js'
+
 export default class MongoInterface {
   constructor(database, collection) {
     this.collection = database.collection(collection);
@@ -17,18 +19,6 @@ export default class MongoInterface {
       })
     }.bind(this))
   }
-
-  // deleteOne(item) {
-  //   return new Promise(function(resolve, reject) {
-  //     this.collection.deleteOne(item, (err) => {
-  //       if (err) {
-  //         return reject(err)
-  //       }
-        
-  //       return resolve(JSON.stringify(item) + ' deleted from db!');
-  //     })
-  //   }.bind(this))
-  // }
 
   insertOne(item) {
     return new Promise(function(resolve, reject) {
@@ -68,15 +58,34 @@ export default class MongoInterface {
     }.bind(this))
   }
 
-  // findByProperty(property) {
-  //   return new Promise(function(resolve, reject) {
-  //     this.collection.find(property).toArray((err, docs) => {
-  //       if (err) {
-  //         return reject(err)
-  //       }
+  updateById(id, obj) {
+    return new Promise(function(resolve, reject) {
+      this.collection.findOneAndUpdate(
+        { _id: ObjectId(id) }, 
+        { '$set': obj },
+        { returnOriginal: false }, 
+        (err, item) => {
+        if (err) {
+          return reject(err)
+        }
         
-  //       return resolve(docs)
-  //     })
-  //   }.bind(this))
-  // }
+        return resolve(item.value);
+      })
+    }.bind(this))
+  }
+
+  filterByKeyValue(obj) {
+    const parsedObj = parseNestedJsonFromQueryParam(obj);
+    
+    return new Promise(function(resolve, reject) {
+      this.collection.find(parsedObj).toArray((err, items) => {
+        if (err) {
+          return reject(err)
+        }
+        
+        return resolve(items);
+      })
+    }.bind(this))
+  }
+
  }
