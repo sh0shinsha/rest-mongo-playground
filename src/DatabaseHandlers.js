@@ -26,8 +26,9 @@ export default class DatabaseHandlers {
     })
   }
 
+  // https://stackoverflow.com/questions/25385559/rest-api-best-practices-args-in-query-string-vs-in-request-body
   async updateUser(req, res, next) {
-    const user = await this.userCollectionInterface.updateById(req.params.id, req.query);
+    const user = await this.userCollectionInterface.updateById(req.params.id, req.body);
     return res.status(200).send({
       entry: {
         keyField: user._id,

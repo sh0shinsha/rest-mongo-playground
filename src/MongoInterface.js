@@ -6,6 +6,39 @@ import parseNestedJsonFromQueryParam from './_utils/parseNestedJsonFromQueryPara
 export default class MongoInterface {
   constructor(database, collection) {
     this.collection = database.collection(collection);
+
+    this.queryOperators = {
+      LESS_THAN: {
+        url: 'lt',
+        operator: '$lt'
+      },
+      GREATER_THAN: {
+        url: 'gt',
+        operator: '$gt'
+      }
+    }
+  }
+
+  assignQueryOperators(obj) {
+    const parsedObj = parseNestedJsonFromQueryParam(obj);
+
+    Object.values(parsedObj).forEach((value) => {
+      Object.keys(value).forEach((key) => {
+        if (key === this.queryOperators.LESS_THAN.url) {
+          const queryKey = this.queryOperators.LESS_THAN.operator;
+          value[queryKey] = value[key];
+          delete value[key];
+        }
+
+        if (key === this.queryOperators.GREATER_THAN.url) {
+          const queryKey = this.queryOperators.GREATER_THAN.operator;
+          value[queryKey] = value[key];
+          delete value[key];
+        }
+      })
+    });
+
+    return parsedObj;
   }
 
   findAll() {
@@ -75,10 +108,10 @@ export default class MongoInterface {
   }
 
   filterByKeyValue(obj) {
-    const parsedObj = parseNestedJsonFromQueryParam(obj);
-    
+    const objWithQueryOperators = this.assignQueryOperators(obj);
+
     return new Promise(function(resolve, reject) {
-      this.collection.find(parsedObj).toArray((err, items) => {
+      this.collection.find(objWithQueryOperators).toArray((err, items) => {
         if (err) {
           return reject(err)
         }
