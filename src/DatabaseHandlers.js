@@ -1,27 +1,54 @@
 import MongoInterface from './MongoInterface.js'
+import urljoin from 'url-join'
 
 export default class DatabaseHandlers {
   constructor(database) {
-    this.toyCollectionInterface = new MongoInterface(database, 'toys');
+    this.userCollectionInterface = new MongoInterface(database, 'users');
+    this.baseURI = 'http://localhost:9000/'
   }
 
-  async getAllDocuments(req, res, next) {
-    const allDocuments = await this.toyCollectionInterface.findAll();
-    return res.send({ allDocuments });
+  async addUser(req, res, next) {
+    const insertionResponse = await this.userCollectionInterface.insertOne(req.body);
+    return res.status(201).send({
+      entry: {
+        keyField: insertionResponse._id,
+        uri: urljoin(this.baseURI, 'user', `${insertionResponse._id}`)
+      }
+    });
   }
 
-  async deleteOne(req, res, next) {
-    const deletionResponse = await this.toyCollectionInterface.deleteOne(req.body);
-    return res.send(deletionResponse);
+  async deleteUser(req, res, next) {
+    const deletionResponse = await this.userCollectionInterface.deleteById(req.params.id);
+    return res.status(200).send({
+      entry: {
+        keyField: deletionResponse.id
+      }
+    })
   }
 
-  async insertOne(req, res, next) {
-    const insertionResponse = await this.toyCollectionInterface.insertOne(req.body);
-    return res.send(insertionResponse);
+  // https://stackoverflow.com/questions/25385559/rest-api-best-practices-args-in-query-string-vs-in-request-body
+  async updateUser(req, res, next) {
+    const user = await this.userCollectionInterface.updateById(req.params.id, req.body);
+    return res.status(200).send({
+      entry: {
+        keyField: user._id,
+        uri: urljoin(this.baseURI, 'user', `${user._id}`)
+      }
+    });
   }
 
-  async filterByProperty(req, res, next) {
-    const filteredDocs = await this.toyCollectionInterface.findByProperty(req.body);
-    return res.send(filteredDocs);
+  async findUser(req, res, next) {
+    const user = await this.userCollectionInterface.findById(req.params.id);
+    return res.status(200).send(user);
+  }
+
+  async allUsers(req, res, next) {
+    if (req.query) {
+      const filteredUsers = await this.userCollectionInterface.filterByKeyValue(req.query);
+      return res.status(200).send(filteredUsers);
+    }
+
+    const allusers = await this.userCollectionInterface.findAll();
+    return res.status(200).send(allusers);
   }
 }

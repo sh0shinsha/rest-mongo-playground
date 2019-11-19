@@ -18,6 +18,7 @@ app.use(function (req, res, next) {
 });
 
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((err, req, res, next) => {
   if (err) {
@@ -32,12 +33,14 @@ MongoClient.connect(MONGO_URL, (err, client) => {
   if (err) return console.log(err);
 
   // https://stackoverflow.com/questions/15604848/express-js-this-undefined-after-routing-with-app-get)!
-  const handlers = new DatabaseHandlers(client.db('btrtest'));
+  const handlers = new DatabaseHandlers(client.db('restpractice'));
 
-  app.get('/getAllDocuments', handlers.getAllDocuments.bind(handlers));
-  app.post('/deleteOne', handlers.deleteOne.bind(handlers));
-  app.post('/insertOne', handlers.insertOne.bind(handlers));
-  app.post('/filterByProperty', handlers.filterByProperty.bind(handlers));
+  app.post('/user', handlers.addUser.bind(handlers));
+  app.delete('/user/:id', handlers.deleteUser.bind(handlers));
+  app.put('/user/:id', handlers.updateUser.bind(handlers));
+  
+  app.get('/user/:id', handlers.findUser.bind(handlers));
+  app.get('/users', handlers.allUsers.bind(handlers));
 
   app.listen(PORT, () => console.log(`sequence_svc listening on port ${PORT}`)); 
 })
